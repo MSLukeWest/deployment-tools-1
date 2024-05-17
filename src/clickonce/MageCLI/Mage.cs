@@ -110,12 +110,13 @@ namespace Microsoft.Deployment.MageCLI
         /// <param name="publisherName">Publisher name</param>
         /// <param name="supportUrl">Support URL</param>
         /// <param name="targetFrameworkVersion">Target Framework version</param>
+        /// <param name="trustUrlParameters">Specifies if URL parameters should be trusted</param>
         /// <returns>DeploymentManifest object</returns>
         public static DeployManifest GenerateDeploymentManifest(string deploymentManifestPath,
             string appName, Version version, Processors processor,
             ApplicationManifest applicationManifest, string applicationManifestPath, string appCodeBase,
             string appProviderUrl, string minVersion, TriStateBool install, TriStateBool includeDeploymentProviderUrl,
-            string publisherName, string supportUrl, string targetFrameworkVersion)
+            string publisherName, string supportUrl, string targetFrameworkVersion, TriStateBool trustUrlParameters)
         {
             /*
               Mage running on Core cannot obtain .NET FX version for targeting.
@@ -167,7 +168,7 @@ namespace Microsoft.Deployment.MageCLI
 
             UpdateDeploymentManifest(manifest, deploymentManifestPath, appName, version, processor,
                 applicationManifest, applicationManifestPath, appCodeBase,
-                appProviderUrl, minVersion, install, includeDeploymentProviderUrl, publisherName, supportUrl, targetFrameworkVersion);
+                appProviderUrl, minVersion, install, includeDeploymentProviderUrl, publisherName, supportUrl, targetFrameworkVersion, trustUrlParameters);
 
             return manifest;
         }
@@ -261,6 +262,11 @@ namespace Microsoft.Deployment.MageCLI
                 }
                 else
                 {
+#if RUNTIME_TYPE_NETCORE
+                    // GetRegisteredOrganization() is a Windows-only API
+                    manifest.Publisher = string.Empty;
+                    if (OperatingSystem.IsWindows())
+#endif
                     // Get the default publisher name
                     manifest.Publisher = Utilities.Misc.GetRegisteredOrganization();
                 }
@@ -312,13 +318,15 @@ namespace Microsoft.Deployment.MageCLI
         /// <param name="publisherName">Publisher name</param>
         /// <param name="supportUrl">Support URL</param>
         /// <param name="targetFrameworkVersion">Target Framework version</param>
+        /// <param name="trustUrlParameters">Specifies if URL parameters should be trusted</param>
         public static void UpdateDeploymentManifest(DeployManifest manifest, string deploymentManifestPath,
             string appName, Version version, Processors processor,
             ApplicationManifest applicationManifest, string applicationManifestPath,
             string appCodeBase, string appProviderUrl, string minVersion,
             TriStateBool install,
             TriStateBool includeDeploymentProviderUrl,
-            string publisherName, string supportUrl, string targetFrameworkVersion)
+            string publisherName, string supportUrl, string targetFrameworkVersion,
+            TriStateBool trustUrlParameters)
         {
             if (install != TriStateBool.Undefined)
             {
@@ -359,6 +367,11 @@ namespace Microsoft.Deployment.MageCLI
             }
             else
             {
+#if RUNTIME_TYPE_NETCORE
+                // GetRegisteredOrganization() is a Windows-only API
+                manifest.Publisher = string.Empty;
+                if (OperatingSystem.IsWindows())
+#endif
                 // Get the default publisher name
                 manifest.Publisher = Utilities.Misc.GetRegisteredOrganization();
             }
@@ -419,6 +432,11 @@ namespace Microsoft.Deployment.MageCLI
             if (appCodeBase != null)
             {
                 SetApplicationCodeBase(manifest, appCodeBase);
+            }
+
+            if (trustUrlParameters == TriStateBool.True)
+            {
+                manifest.TrustUrlParameters = true;
             }
         }
 

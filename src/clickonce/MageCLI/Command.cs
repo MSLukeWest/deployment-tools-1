@@ -147,6 +147,9 @@ namespace Microsoft.Deployment.MageCLI
         [CommandLineArgument(LongName = "CryptoProvider", ShortName = "csp")]
         public string cryptoProviderName = null;
 
+        [CommandLineArgument(LongName = "TrustURLParameters", ShortName = "tu")]
+        public string trustUrlParametersString = null;
+
         [CommandLineArgument(LongName = "UseManifestForTrust", ShortName = "um")]
         public string useApplicationManifestForTrustInfoString = null;
 
@@ -207,6 +210,11 @@ namespace Microsoft.Deployment.MageCLI
         /// UseManifestForTrust, in boolean form, parsed from the useApplicationManifestForTrustInfoString member
         /// </summary>
         private TriStateBool useApplicationManifestForTrustInfo = TriStateBool.Undefined;
+
+        /// <summary>
+        /// TrustURLParameters, in boolean form, parsed from the trustUrlParametersString member
+        /// </summary>
+        private TriStateBool trustUrlParameters = TriStateBool.Undefined;
 
         /// <summary>
         /// This object is cached between CanExecute(), where it is opened and
@@ -705,6 +713,11 @@ namespace Microsoft.Deployment.MageCLI
                     {
                         Version v = new Version(isRequiredUpdateString);
                         minVersion = isRequiredUpdateString;
+
+                        // Specifying minimum version implies that the app will get installed.
+                        // We will set 'install' to true, otherwise, app will not check for future updates.
+                        // Install value can still be overridden on command line, see next code block.
+                        install = TriStateBool.True;
                     }
                     catch (ArgumentOutOfRangeException)
                     {
@@ -718,30 +731,22 @@ namespace Microsoft.Deployment.MageCLI
             // Validate the Install option, if given
             if (installString != null)
             {
-                if (!string.IsNullOrEmpty(minVersion))
+                switch (installString.ToLower(CultureInfo.InvariantCulture))
                 {
-                    Application.PrintErrorMessage(ErrorMessages.InvalidMinVersion, minVersion);
-                    result = false;
-                }
-                else
-                {
-                    switch (installString.ToLower(CultureInfo.InvariantCulture))
-                    {
-                        case "true":
-                        case "t":
-                            install = TriStateBool.True;
-                            break;
+                    case "true":
+                    case "t":
+                        install = TriStateBool.True;
+                        break;
 
-                        case "false":
-                        case "f":
-                            install = TriStateBool.False;
-                            break;
+                    case "false":
+                    case "f":
+                        install = TriStateBool.False;
+                        break;
 
-                        default:
-                            result = false;
-                            Application.PrintErrorMessage(ErrorMessages.InvalidInstall, installString);
-                            break;
-                    }
+                    default:
+                        result = false;
+                        Application.PrintErrorMessage(ErrorMessages.InvalidInstall, installString);
+                        break;
                 }
             }
 
@@ -792,6 +797,28 @@ namespace Microsoft.Deployment.MageCLI
                     default:
                         result = false;
                         Application.PrintErrorMessage(ErrorMessages.InvalidUseManifestForTrust, useApplicationManifestForTrustInfoString);
+                        break;
+                }
+            }
+
+            // Validate the TrustUrlParameters option, if given
+            if (trustUrlParametersString != null)
+            {
+                switch (trustUrlParametersString.ToLower(CultureInfo.InvariantCulture))
+                {
+                    case "true":
+                    case "t":
+                        trustUrlParameters = TriStateBool.True;
+                        break;
+
+                    case "false":
+                    case "f":
+                        trustUrlParameters = TriStateBool.False;
+                        break;
+
+                    default:
+                        result = false;
+                        Application.PrintErrorMessage(ErrorMessages.InvalidTrustURLParameters, trustUrlParametersString);
                         break;
                 }
             }
@@ -863,7 +890,8 @@ namespace Microsoft.Deployment.MageCLI
                 errors += CheckForFileTypeSpecificOption("Deployment", "AppProviderUrl", applicationProviderUrl);
                 errors += CheckForFileTypeSpecificOption("Deployment", "RequiredUpdate", isRequiredUpdateString);
                 errors += CheckForFileTypeSpecificOption("Deployment", "Install", installString);
-                errors += CheckForFileTypeSpecificOption("Deployment", "IncludeProviderURL", includeDeploymentProviderUrlString);
+                errors += CheckForFileTypeSpecificOption("Deployment", "IncludeProviderUrl", includeDeploymentProviderUrlString);
+                errors += CheckForFileTypeSpecificOption("Deployment", "TrustUrlParameters", trustUrlParametersString);
             }
 
             if (Requested(Operations.GenerateDeploymentManifest) ||
@@ -906,6 +934,7 @@ namespace Microsoft.Deployment.MageCLI
                 errors += CheckForInvalidNonManifestOption("RequiredUpdate", isRequiredUpdateString);
                 errors += CheckForInvalidNonManifestOption("IncludeProviderURL", includeDeploymentProviderUrlString);
                 errors += CheckForInvalidNonManifestOption("UseManifestForTrust", useApplicationManifestForTrustInfoString);
+                errors += CheckForInvalidNonManifestOption("TrustUrlParameters", trustUrlParametersString);
                 errors += CheckForInvalidNonManifestOption("IconFile", iconFile);
             }
 
@@ -1324,7 +1353,7 @@ namespace Microsoft.Deployment.MageCLI
             else if (Requested(Operations.GenerateDeploymentManifest))
             {
                 applicationName += ".app";
-                manifest = Mage.GenerateDeploymentManifest(outputPath, applicationName, applicationVersion, processor, cachedAppManifest, applicationManifestPath, applicationCodeBase, applicationProviderUrl, minVersion, install, includeDeploymentProviderUrl, publisherName, supportUrl, targetFrameworkVersion);
+                manifest = Mage.GenerateDeploymentManifest(outputPath, applicationName, applicationVersion, processor, cachedAppManifest, applicationManifestPath, applicationCodeBase, applicationProviderUrl, minVersion, install, includeDeploymentProviderUrl, publisherName, supportUrl, targetFrameworkVersion, trustUrlParameters);
             }
 
             // Update operations
@@ -1335,7 +1364,7 @@ namespace Microsoft.Deployment.MageCLI
             }
             else if (Requested(Operations.UpdateDeploymentManifest))
             {
-                Mage.UpdateDeploymentManifest(cachedDepManifest, outputPath, applicationName, applicationVersion, processor, cachedAppManifest, applicationManifestPath, applicationCodeBase, applicationProviderUrl, minVersion, install, includeDeploymentProviderUrl, publisherName, supportUrl, targetFrameworkVersion);
+                Mage.UpdateDeploymentManifest(cachedDepManifest, outputPath, applicationName, applicationVersion, processor, cachedAppManifest, applicationManifestPath, applicationCodeBase, applicationProviderUrl, minVersion, install, includeDeploymentProviderUrl, publisherName, supportUrl, targetFrameworkVersion, trustUrlParameters);
                 manifest = cachedDepManifest;
             }
 
@@ -1479,8 +1508,10 @@ namespace Microsoft.Deployment.MageCLI
                 Sha256SignatureMethodUri);
 
 #if RUNTIME_TYPE_NETCORE
+#pragma warning disable SYSLIB0021
             CryptoConfig.AddAlgorithm(typeof(SHA256Managed),
                 Sha256DigestMethod);
+#pragma warning restore SYSLIB0021
 #else
             CryptoConfig.AddAlgorithm(typeof(SHA256Cng),
                 Sha256DigestMethod);

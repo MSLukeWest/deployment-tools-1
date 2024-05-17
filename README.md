@@ -3,6 +3,14 @@
 This repo contains the code to build the .NET deployment tools and installers for
 all supported platforms, as well as the sources to .NET deployment tools.
 
+## Status
+
+| |Build|
+|---|:--:|
+| ci |[![Build Status](https://dev.azure.com/dnceng/public/_apis/build/status/dotnet.deployment-tools?branchName=main)](https://dev.azure.com/dnceng/public/_build/latest?definitionId=884&branchName=main)|
+| official | [![Build Status](https://dev.azure.com/dnceng/internal/_apis/build/status/dotnet-deployment-tools?branchName=main)](https://dev.azure.com/dnceng/internal/_build/latest?definitionId=877&branchName=main)|
+<br/>
+
 ## Tools documentation
 
 * [dotnet-mage](Documentation/dotnet-mage/README.md) usage patterns for dotnet-mage tool (formerly Mage.NET)
@@ -15,16 +23,16 @@ Official Starting Page: https://dotnet.microsoft.com/
   * [Install official releases](https://dotnet.microsoft.com/download)
   * [Documentation](https://docs.microsoft.com/dotnet/core) (Get Started, Tutorials, Porting from .NET Framework, API reference, ...)
     * [Deploying apps](https://docs.microsoft.com/dotnet/core/deploying)
-  * [Supported OS versions](https://github.com/dotnet/core/blob/master/os-lifecycle-policy.md)
-* [Roadmap](https://github.com/dotnet/core/blob/master/roadmap.md)
-* [Releases](https://github.com/dotnet/core/tree/master/release-notes)
+  * [Supported OS versions](https://github.com/dotnet/core/blob/main/os-lifecycle-policy.md)
+* [Roadmap](https://github.com/dotnet/core/blob/main/roadmap.md)
+* [Releases](https://github.com/dotnet/core/tree/main/release-notes)
 
 ## How can I contribute?
 
 We welcome contributions! Many people all over the world have helped make this project better.
 
 * [Contributing](CONTRIBUTING.md) explains what kinds of changes we welcome
-* [Get Up and Running on .NET Core](documentation/project/dogfooding.md) explains how to get nightly builds of the runtime and its libraries to test them in your own projects.
+* [Get Up and Running on .NET Core](https://github.com/dotnet/runtime/blob/main/docs/project/dogfooding.md) explains how to get nightly builds of the runtime and its libraries to test them in your own projects.
 
 ## Building
 
@@ -32,17 +40,9 @@ To build the whole repo:
 
 `build`
 
-To build just specific subsets, i.e. `clickonce`:
-
-`build -subset clickonce`
-
 After you've built binaries, you can create packages, by running the following:
 
 `build -pack`
-
-## Localization
-
-You can turn on localized builds via the `/p:LocalizedBuild=true` command line argument.
 
 ## Reporting security issues and security bugs
 
